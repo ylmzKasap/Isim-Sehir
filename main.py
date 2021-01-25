@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from tablemaker import table_it
 import playerclass
@@ -9,6 +10,43 @@ playerNumber, categoryNumber = 1, 1
 letters = ['a', 'b', 'c', 'ç', 'd', 'e', 'f', 'g', 'ğ', 'h', 'ı', 'i',
            'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's', 'ş', 't',
            'u', 'ü', 'v', 'y', 'z']
+
+
+def calculate_score(category, gameTour):
+    answerToScore = []
+    for gamePlayer in players:
+        answerToScore.append(getattr(obj[gamePlayer], f'{category}_{gameTour}'))
+    for gamePlayer in players:
+        playerCategoryAnswer = getattr(obj[gamePlayer], f'{category}_{gameTour}')
+        if playerCategoryAnswer == '':
+            obj[gamePlayer].score_response(category, gameTour, 0)
+        elif answerToScore.count('') == len(players) - 1:
+            obj[gamePlayer].score_response(category, gameTour, 20)
+        elif answerToScore.count(playerCategoryAnswer) > 1:
+            obj[gamePlayer].score_response(category, gameTour, 5)
+        else:
+            obj[gamePlayer].score_response(category, gameTour, 10)
+
+
+def get_answer_score_for_table(gameTour):
+    for gamePlayer in players:
+        for i in range(len(gameCategories)):
+            obj[gamePlayer].table[i][gameTour] = (
+                getattr(obj[gamePlayer], f'{gameCategories[i]}_{gameTour}')
+                + ': '
+                + str(getattr(obj[gamePlayer], f'{gameCategories[i]}_{gameTour}_score'))
+                 )
+
+
+def sum_tour_score(gameTour):
+    for player in players:
+        playerRoundScore = 0
+        for i in range(len(gameCategories)):
+            playerRoundScore += getattr(obj[player], f'{gameCategories[i]}_{gameTour}_score')
+        try:
+            obj[player].table[-1][gameTour] = playerRoundScore
+        except IndexError:
+            obj[player].table[-1].append(playerRoundScore)
 
 
 print('\nİsim şehir oyununa hoş geldiniz.\n', end=' ')
@@ -97,7 +135,7 @@ categoryNumbers = {category: index for index, category in enumerate(gameCategori
 
 
 players = ['Nisa', 'Mahmut', 'Yılmaz']
-gameCategories = ['İsim', 'Şehir']
+gameCategories = ['İsim', 'Şehir', 'Hayvan']
 
 obj = {}
 for player in players:
@@ -107,11 +145,16 @@ for player in players:
 # --- Remove after testing ---
 
 tour = 1
+
 while True:
     # TODO Harf seç | Süre ekle
 
     print('\nOyun başladı! Tur sona erdiğinde enter\'a basın.')
-    input()
+    a = input()
+    os.system('cls')
+
+    if a == 'q':  # For testing
+        break
 
     categoryIndex = playerIndex = 0
     categoryAnswers = [
@@ -134,8 +177,9 @@ while True:
             if playerAnswer == '-':
                 try:
                     obj[players[playerIndex-1]].remove_answer(category, tour)
-                    if goingBack == 0 and len(categoryAnswers[categoryIndex][playerIndex-1]) > 1:
-                        categoryAnswers[categoryIndex][playerIndex-1].pop()
+                    deleteOnAnswersList = categoryAnswers[categoryIndex][playerIndex-1]
+                    if goingBack == 0 and len(deleteOnAnswersList) > 1:
+                        deleteOnAnswersList.pop()
                         playerIndex -= 1
                     os.system('cls')
                     table_it(categoryAnswers[categoryIndex])
@@ -159,14 +203,53 @@ while True:
             categoryIndex -= 1
             playerIndex = len(players) - 1
             categoryAnswers[categoryIndex][playerIndex].pop()
+            obj[players[playerIndex]].remove_answer(gameCategories[categoryIndex], tour)
             os.system('cls')
             table_it(categoryAnswers[categoryIndex])
             continue
+        calculate_score(category, tour)
         categoryIndex += 1
 
+    for category in gameCategories:
+        for player in players:
+            obj[player].score += getattr(obj[player], f'{category}_{tour}_score')  # Add to total score
+
+    os.system('cls')
+    print('\nPuan tablosu: \n ')
+    totalScores = {player: obj[player].score for player in players}
+    sortedTotalScores = {k: v for k, v in sorted(totalScores.items(), reverse=True, key=lambda item: item[1])}
+    scoresList = [[], []]
+    for name, score in sortedTotalScores.items():
+        scoresList[0].append(name)
+        scoresList[1].append(score)
+    table_it(scoresList)
+
+    get_answer_score_for_table(tour)
+    sum_tour_score(tour)
+
     while True:
-        code = input()
-        try:
-            print(eval(code))
-        except:
+        print('\nOyuncu ismi yazarak puan tablosunu görüntüleyebilirsiniz.')
+        decision = input().title()
+        if decision == '':
+            break
+
+        elif decision not in players:
+            os.system('cls')
+            table_it(scoresList)
+            print(f'\n{decision} adında bir oyuncu yok.')
             continue
+
+        os.system('cls')
+        print(f'\n{decision} Puan Tablosu:')
+        table_it(obj[decision].table)
+
+    os.system('cls')
+    tour += 1
+
+
+while True:
+    code = input()
+    try:
+        eval(code)
+    except:
+        print(traceback.format_exc())

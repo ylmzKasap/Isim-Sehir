@@ -6,6 +6,7 @@ class Contender:
         self.categories = categoryList
         self.categoryNumbers = {category: index for index, category in enumerate(categoryList)}
         self.table = [[category] for category in categoryList]
+        self.table.append(['Puan'])
 
     def answer(self, category, response):
         indexNumber = 1
@@ -22,5 +23,5 @@ class Contender:
         delattr(self, f'{category}_{tour}')
         del self.table[self.categoryNumbers[category]][tour]
 
-    def score_response(self, category, response, score):
-        setattr(self, f'{category}_{response}', score)
+    def score_response(self, category, tour, score):
+        setattr(self, f'{category}_{tour}_score', score)
