@@ -1,8 +1,10 @@
 import os
-import traceback
+import random
+import time
 
 from tablemaker import table_it
 import playerclass
+import whichtime
 
 players = []
 gameCategories = []
@@ -39,15 +41,15 @@ def get_answer_score_for_table(gameTour):
 
 
 def sum_tour_score(gameTour):
-    for player in players:
+    for gamePlayer in players:
         playerRoundScore = 0
         for i in range(len(gameCategories)):
-            playerRoundScore += getattr(obj[player], f'{gameCategories[i]}_{gameTour}_score')
+            playerRoundScore += getattr(obj[gamePlayer], f'{gameCategories[i]}_{gameTour}_score')
         try:
-            obj[player].table[-1][gameTour] = playerRoundScore
+            obj[gamePlayer].table[-1][gameTour] = playerRoundScore
         except IndexError:
-            obj[player].table[-1].append(playerRoundScore)
-        obj[player].sum_tour(gameTour, playerRoundScore)
+            obj[gamePlayer].table[-1].append(playerRoundScore)
+        obj[gamePlayer].sum_tour(gameTour, playerRoundScore)
 
 
 print('\nİsim şehir oyununa hoş geldiniz.\n', end=' ')
@@ -145,17 +147,91 @@ for player in players:
 
 # --- Remove after testing ---
 
-tour = 1
+print('\nHarfler rastgele gelsin diyorsanız enterlayın gitsin.')
+print('Harfleri kendiniz seçmek istiyorsanız \'b\' tuşuna basıp enterlayın.')
 
+letterDecision = input().lower()
+if letterDecision == 'b':
+    letterDecision = 0
+else:
+    letterDecision = 1
+os.system('cls')
+
+tourTime = 0
 while True:
-    # TODO Harf seç | Süre ekle
+    print('\nTur süresi kaç saniye olsun?')
+    tourTime = input()
+    try:
+        tourTime = abs(int(tourTime))
+        break
+    except ValueError:
+        os.system('cls')
+        print('\nSaniye türünden geçerli bir sayı girin.')
+os.system('cls')
 
-    print('\nOyun başladı! Tur sona erdiğinde enter\'a basın.')
-    a = input()
+tour = 1
+while True:
+    print('\nTuru başlatmak için entera basın.')
+    changeTime = input()
     os.system('cls')
 
-    if a == 'q':  # For testing
-        break
+    if changeTime == 'süre':
+        os.system('cls')
+        while True:
+            print('\nTur süresi kaç saniye olsun?')
+            tourTime = input()
+            try:
+                tourTime = abs(int(tourTime))
+                break
+            except ValueError:
+                os.system('cls')
+                print('\nSaniye türünden geçerli bir sayı girin.')
+        os.system('cls')
+        print(f'\nYeni tur süresi: {whichtime.tell_time(tourTime)}')
+        print('\nTuru başlatmak için entera basın.')
+        changeTime = input()
+
+    letterChosen = ''
+    if letterDecision == 1:
+        while True:
+            letterChosen = random.choice(letters)
+
+            if letterChosen == 'ğ' and len(letters) > 1:
+                os.system('cls')
+                print('\nTüh! \'Ğ\' geldi. Tekrar deneyin.')
+                input()
+                continue
+
+            elif len(letters) == 1:
+                os.system('cls')
+                print('\nNasıl başardıysanız bütün harfleri tüketmişsiniz.'
+                      + '\nYine de turu başlatmak için enterlayın.')
+                input()
+                letterDecision = 0
+                os.system('cls')
+                break
+
+            os.system('cls')
+            letters.remove(letterChosen)
+            break
+
+    countdown = tourTime
+    while countdown > 0:
+        try:
+            if letterDecision == 1:
+                print(f'\nSeçinlen harf: {letterChosen}')
+            print('\nTur başladı!')
+            print(f'\nTurun bitmesine son {whichtime.tell_time(countdown)}.')
+            time.sleep(1)
+            os.system('cls')
+            countdown -= 1
+        except KeyboardInterrupt:
+            break
+
+    os.system('cls')
+    print('\nTur sona erdi. Cevaplara geçmek için enterlayın.')
+    input()
+    os.system('cls')
 
     categoryIndex = playerIndex = 0
     categoryAnswers = [
@@ -174,6 +250,7 @@ while True:
             player = players[playerIndex]
             print(f"\n{player} {category} için ne diyor?")
             playerAnswer = input().lower()
+            playerAnswer = playerAnswer.strip()
 
             if playerAnswer == '-':
                 try:
@@ -223,28 +300,36 @@ while True:
         scoresList[0].append(name)
         scoresList[1].append(score)
 
+    get_answer_score_for_table(tour)
+    sum_tour_score(tour)
+
     os.system('cls')
     print('\nPuan tablosu: \n ')
     table_it(scoresList)
 
-    get_answer_score_for_table(tour)
-    sum_tour_score(tour)
-
+    info = 0
     while True:
-        print('\nOyuncu ismi yazarak puan tablosunu görüntüleyebilirsiniz.')
+        if info == 0:
+            print('\nOyuncu ismi yazarak puan tablosunu görüntüleyebilirsiniz.')
+            info = 1
+        print(f"\nMevcut oyuncular: {', '.join(players)}")
         decision = input().title()
         if decision == '':
             break
 
         elif decision == '-':
             while decision != 'Q':
-                print('\nDüzeltme modu. Cevabını düzenlemek istediğiniz kişinin ismini yazın.')
-                print('Düzeltme modundan çıkmak için \'q\' tuşuna basın.')
+                os.system('cls')
+                print('\nDüzeltme modu. \n\nCevabını düzenlemek istediğiniz kişinin ismini yazın.')
+                table_it(scoresList)
+                print('\nDüzeltme modundan çıkmak için \'q\' tuşuna basın.')
                 playerNameToEdit = input().title()
                 os.system('cls')
 
                 if playerNameToEdit == 'Q':
                     decision = ' '
+                    print('\nOyuncu ismi yazarak puan tablosunu görüntüleyebilirsiniz.')
+                    table_it(scoresList)
                     break
 
                 while playerNameToEdit not in players:
@@ -252,7 +337,7 @@ while True:
                     playerNameToEdit = input().title()
                     os.system('cls')
 
-                print(f'Oyuncu adı: {playerNameToEdit}')
+                print(f'\nOyuncu adı: {playerNameToEdit}')
                 table_it(obj[playerNameToEdit].table)
                 print('\nHangi kategorideki cevap değiştirilsin?')
                 categoryToEdit = input().title()
@@ -260,14 +345,14 @@ while True:
 
                 while categoryToEdit not in gameCategories:
                     table_it(obj[playerNameToEdit].table)
-                    print(f"\nBöyle bir kategori yok. Mevcut kategoriler: {', '.join(gameCategories)}")
+                    print(f"\nBöyle bir kategori yok. \n\nMevcut kategoriler: {', '.join(gameCategories)}")
                     categoryToEdit = input().title()
                     os.system('cls')
 
-                valueError = indexError = 0
+                valueError = indexError = tourToEdit = 0
                 while True:
                     try:
-                        print(f'Oyuncu adı: {playerNameToEdit}')
+                        print(f'\nOyuncu adı: {playerNameToEdit}')
                         print(f'Kategori: {categoryToEdit}')
                         table_it(obj[playerNameToEdit].table)
                         print('\nHangi turdaki cevap değiştirilsin?')
@@ -291,15 +376,17 @@ while True:
                         indexError = 1
                         os.system('cls')
                         continue
+                    os.system('cls')
                     break
 
-                print(f'Oyuncu adı: {playerNameToEdit}')
+                print(f'\nOyuncu adı: {playerNameToEdit}')
                 table_it(obj[playerNameToEdit].table)
                 print('\n' + getattr(
                     obj[playerNameToEdit], f'{categoryToEdit}_{tourToEdit}')
                       + ' yerine ne yazılsın?')
 
-                newAnswer = input()
+                newAnswer = input().lower()
+                newAnswer = newAnswer.strip()
 
                 obj[playerNameToEdit].change_answer(categoryToEdit, tourToEdit, newAnswer)
                 calculate_score(categoryToEdit, tourToEdit)
@@ -320,9 +407,15 @@ while True:
                 for name, score in sortedTotalScores.items():
                     scoresList[0].append(name)
                     scoresList[1].append(score)
+                os.system('cls')
+                print()
+                table_it(scoresList)
                 break
+            continue
 
+        elif decision == 't':
             os.system('cls')
+            table_it(scoresList)
             continue
 
         elif decision not in players:
@@ -337,11 +430,3 @@ while True:
 
     os.system('cls')
     tour += 1
-
-
-while True:
-    code = input()
-    try:
-        eval(code)
-    except:
-        print(traceback.format_exc())
