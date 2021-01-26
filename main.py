@@ -1,10 +1,15 @@
 import os
 import random
 import time
+import datetime
+
+import openpyxl
+from openpyxl.utils import get_column_letter
 
 from tablemaker import table_it
 import playerclass
 import whichtime
+import excelstyle
 
 players = []
 gameCategories = []
@@ -13,21 +18,29 @@ letters = ['a', 'b', 'c', 'ç', 'd', 'e', 'f', 'g', 'ğ', 'h', 'ı', 'i',
            'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's', 'ş', 't',
            'u', 'ü', 'v', 'y', 'z']
 
+savePath = f'{os.getcwd()}\\Save Files'
+if not os.path.exists(savePath):
+    os.mkdir(savePath)
 
-def calculate_score(category, gameTour):
+saveFolder = f"{len(os.listdir(savePath))}- {datetime.datetime.now().strftime('%d.%m.%Y')}"
+savePath = f'{savePath}\\{saveFolder}'
+os.makedirs(savePath)
+
+
+def calculate_score(gameCategory, gameTour):
     answerToScore = []
     for gamePlayer in players:
-        answerToScore.append(getattr(obj[gamePlayer], f'{category}_{gameTour}'))
+        answerToScore.append(getattr(obj[gamePlayer], f'{gameCategory}_{gameTour}'))
     for gamePlayer in players:
-        playerCategoryAnswer = getattr(obj[gamePlayer], f'{category}_{gameTour}')
+        playerCategoryAnswer = getattr(obj[gamePlayer], f'{gameCategory}_{gameTour}')
         if playerCategoryAnswer == '':
-            obj[gamePlayer].score_response(category, gameTour, 0)
+            obj[gamePlayer].score_response(gameCategory, gameTour, 0)
         elif answerToScore.count('') == len(players) - 1:
-            obj[gamePlayer].score_response(category, gameTour, 20)
+            obj[gamePlayer].score_response(gameCategory, gameTour, 20)
         elif answerToScore.count(playerCategoryAnswer) > 1:
-            obj[gamePlayer].score_response(category, gameTour, 5)
+            obj[gamePlayer].score_response(gameCategory, gameTour, 5)
         else:
-            obj[gamePlayer].score_response(category, gameTour, 10)
+            obj[gamePlayer].score_response(gameCategory, gameTour, 10)
 
 
 def get_answer_score_for_table(gameTour):
@@ -52,9 +65,61 @@ def sum_tour_score(gameTour):
         obj[gamePlayer].sum_tour(gameTour, playerRoundScore)
 
 
+def save_to_excel():
+    for gamePlayer in players:
+        wBook = openpyxl.Workbook()
+        sheet = wBook.active
+
+        maxRow = len(obj[gamePlayer].table[0])
+        maxColumn = len(obj[gamePlayer].table)
+
+        # Create and color player name
+        sheet['A1'] = f'{gamePlayer} Puan Tablosu'
+        sheet.merge_cells(f'A1:{get_column_letter(maxColumn)}1')
+        sheet['A1'].fill = excelstyle.orangeFill
+        sheet['A1'].border = excelstyle.thinBorder
+
+        for i in range(1, maxColumn + 1):
+            sheet[f'{get_column_letter(i)}2'].fill = excelstyle.oliveFill  # Color categories
+            sheet.column_dimensions[get_column_letter(i)].width = 20  # Adjust column width
+
+        for i in range(1, 3):
+            for j in range(1, maxColumn + 1):
+                sheet[f'{get_column_letter(j)}{i}'].font = excelstyle.boldFont
+
+        for i in range(1, maxRow + 2):
+            # Adjust row height
+            sheet.row_dimensions[i].height = 30
+
+            # Adjust borders
+            for j in range(1, maxColumn + 1):
+                sheet[f'{get_column_letter(j)}{i}'].border = excelstyle.thinBorder
+
+            # Adjust row colors
+            if i > 2 and i % 2 != 0:
+                for j in range(1, maxColumn + 1):
+                    sheet[f'{get_column_letter(j)}{i}'].fill = excelstyle.lightGrayFill
+            elif i > 2 and i % 2 == 0:
+                for j in range(1, maxColumn + 1):
+                    sheet[f'{get_column_letter(j)}{i}'].fill = excelstyle.darkGrayFill
+
+            # Adjust alignment
+            for j in range(1, maxColumn + 1):
+                sheet[f'{get_column_letter(j)}{i}'].alignment = excelstyle.centerIt
+
+        # Write answers
+        for columnIndex, column in enumerate(obj[gamePlayer].table):
+            for rowIndex in range(len(column)):
+                sheet.cell(column=columnIndex+1, row=rowIndex+2).value = obj[gamePlayer].table[columnIndex][rowIndex]
+
+        try:
+            wBook.save(f'{savePath}\\{gamePlayer}.xlsx')
+        except PermissionError:
+            pass
+
+
 print('\nİsim şehir oyununa hoş geldiniz.\n', end=' ')
 
-"""
 while True:
     print(f"\n{playerNumber}. oyuncunun ismini yazın."
           + " | '-' son kişiyi siler. 'q' isim sorgusunu bitirir.")
@@ -89,10 +154,6 @@ while True:
     players.append(name)
     playerNumber += 1
     print(f"\nMevcut Oyuncular: {', '.join(players)}")
-
-obj = {}
-for player in players:
-    obj[player] = playerclass.Contender(player, gameCategories)
 
 os.system('cls')
 
@@ -132,21 +193,16 @@ while True:
     print(f"\nMevcut Kategoriler: {', '.join(gameCategories)}")
 
 categoryNumbers = {category: index for index, category in enumerate(gameCategories)}
-"""
-
-# --- Remove after testing ---
-
-
-players = ['Nisa', 'Mahmut', 'Yılmaz']
-gameCategories = ['İsim', 'Şehir', 'Hayvan']
 
 obj = {}
 for player in players:
     obj[player] = playerclass.Contender(player, gameCategories)
 
+for player in players:
+    wb = openpyxl.Workbook()
+    wb.save(f'{savePath}\\{player}.xlsx')
 
-# --- Remove after testing ---
-
+os.system('cls')
 print('\nHarfler rastgele gelsin diyorsanız enterlayın gitsin.')
 print('Harfleri kendiniz seçmek istiyorsanız \'b\' tuşuna basıp enterlayın.')
 
@@ -302,6 +358,7 @@ while True:
 
     get_answer_score_for_table(tour)
     sum_tour_score(tour)
+    save_to_excel()
 
     os.system('cls')
     print('\nPuan tablosu: \n ')
@@ -409,6 +466,7 @@ while True:
                     scoresList[1].append(score)
                 os.system('cls')
                 print()
+                save_to_excel()
                 table_it(scoresList)
                 break
             continue
