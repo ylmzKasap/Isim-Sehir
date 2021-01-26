@@ -47,6 +47,7 @@ def sum_tour_score(gameTour):
             obj[player].table[-1][gameTour] = playerRoundScore
         except IndexError:
             obj[player].table[-1].append(playerRoundScore)
+        obj[player].sum_tour(gameTour, playerRoundScore)
 
 
 print('\nİsim şehir oyununa hoş geldiniz.\n', end=' ')
@@ -158,7 +159,7 @@ while True:
 
     categoryIndex = playerIndex = 0
     categoryAnswers = [
-        [[player] for player in players] for category in gameCategories]  # To make a table for each category
+        [[player] for player in players] for category in gameCategories]
     goingBack = 0
 
     while categoryIndex < len(gameCategories):
@@ -214,14 +215,16 @@ while True:
         for player in players:
             obj[player].score += getattr(obj[player], f'{category}_{tour}_score')  # Add to total score
 
-    os.system('cls')
-    print('\nPuan tablosu: \n ')
     totalScores = {player: obj[player].score for player in players}
-    sortedTotalScores = {k: v for k, v in sorted(totalScores.items(), reverse=True, key=lambda item: item[1])}
+    sortedTotalScores = {
+        k: v for k, v in sorted(totalScores.items(), reverse=True, key=lambda item: item[1])}
     scoresList = [[], []]
     for name, score in sortedTotalScores.items():
         scoresList[0].append(name)
         scoresList[1].append(score)
+
+    os.system('cls')
+    print('\nPuan tablosu: \n ')
     table_it(scoresList)
 
     get_answer_score_for_table(tour)
@@ -232,6 +235,95 @@ while True:
         decision = input().title()
         if decision == '':
             break
+
+        elif decision == '-':
+            while decision != 'Q':
+                print('\nDüzeltme modu. Cevabını düzenlemek istediğiniz kişinin ismini yazın.')
+                print('Düzeltme modundan çıkmak için \'q\' tuşuna basın.')
+                playerNameToEdit = input().title()
+                os.system('cls')
+
+                if playerNameToEdit == 'Q':
+                    decision = ' '
+                    break
+
+                while playerNameToEdit not in players:
+                    print(f"\nBöyle bir oyuncu yok. Mevcut oyuncular: {', '.join(players)}")
+                    playerNameToEdit = input().title()
+                    os.system('cls')
+
+                print(f'Oyuncu adı: {playerNameToEdit}')
+                table_it(obj[playerNameToEdit].table)
+                print('\nHangi kategorideki cevap değiştirilsin?')
+                categoryToEdit = input().title()
+                os.system('cls')
+
+                while categoryToEdit not in gameCategories:
+                    table_it(obj[playerNameToEdit].table)
+                    print(f"\nBöyle bir kategori yok. Mevcut kategoriler: {', '.join(gameCategories)}")
+                    categoryToEdit = input().title()
+                    os.system('cls')
+
+                valueError = indexError = 0
+                while True:
+                    try:
+                        print(f'Oyuncu adı: {playerNameToEdit}')
+                        print(f'Kategori: {categoryToEdit}')
+                        table_it(obj[playerNameToEdit].table)
+                        print('\nHangi turdaki cevap değiştirilsin?')
+
+                        if valueError == 1:
+                            print('\nBir sayı girin.')
+                            valueError = 0
+
+                        if indexError == 1:
+                            print(f'\nGeçerli bir tur sayısı girin. Şu anda {tour}. turdayız.')
+                            indexError = 0
+
+                        tourToEdit = int(input())
+
+                    except ValueError:
+                        valueError = 1
+                        os.system('cls')
+                        continue
+
+                    if tourToEdit < 1 or tourToEdit > tour:
+                        indexError = 1
+                        os.system('cls')
+                        continue
+                    break
+
+                print(f'Oyuncu adı: {playerNameToEdit}')
+                table_it(obj[playerNameToEdit].table)
+                print('\n' + getattr(
+                    obj[playerNameToEdit], f'{categoryToEdit}_{tourToEdit}')
+                      + ' yerine ne yazılsın?')
+
+                newAnswer = input()
+
+                obj[playerNameToEdit].change_answer(categoryToEdit, tourToEdit, newAnswer)
+                calculate_score(categoryToEdit, tourToEdit)
+                get_answer_score_for_table(tourToEdit)
+
+                for player in players:
+                    obj[player].score -= getattr(obj[player], f'sum_{tourToEdit}')
+
+                sum_tour_score(tourToEdit)
+
+                for player in players:
+                    obj[player].score += getattr(obj[player], f'sum_{tourToEdit}')
+
+                totalScores = {player: obj[player].score for player in players}
+                sortedTotalScores = {
+                    k: v for k, v in sorted(totalScores.items(), reverse=True, key=lambda item: item[1])}
+                scoresList = [[], []]
+                for name, score in sortedTotalScores.items():
+                    scoresList[0].append(name)
+                    scoresList[1].append(score)
+                break
+
+            os.system('cls')
+            continue
 
         elif decision not in players:
             os.system('cls')

@@ -19,9 +19,16 @@ class Contender:
         setattr(self, f'{category}_{indexNumber}', response)
         self.table[self.categoryNumbers[category]].append(response)
 
+    def change_answer(self, category, tour, newAnswer):
+        setattr(self, f'{category}_{tour}', newAnswer)
+        self.table[self.categoryNumbers[category]][tour] = newAnswer
+
     def remove_answer(self, category, tour):
         delattr(self, f'{category}_{tour}')
         del self.table[self.categoryNumbers[category]][tour]
 
     def score_response(self, category, tour, score):
         setattr(self, f'{category}_{tour}_score', score)
+
+    def sum_tour(self, tour, total):
+        setattr(self, f'sum_{tour}', total)
