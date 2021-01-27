@@ -1,69 +1,74 @@
 def table_it(aList):
-    longest = 0
-    for i in range(len(aList)):
-        if len(aList[i]) > longest:
-            longest = len(aList[i])
+    # Maximum number of columns
+    mostColumns = len(aList)
 
-    lengths = []
-    for i in range(len(aList)):
-        longestl = 0
-        for ii in range(len(aList[i])):
-            if len(str(aList[i][ii])) > longestl:
-                longestl = len(str(aList[i][ii]))
-        lengths += [longestl]
+    # Maximum number of rows
+    mostRows = 0
+    for i in range(mostColumns):
+        if len(aList[i]) > mostRows:
+            mostRows = len(aList[i])
 
-    listWidth = len(aList)
-    listLength = longest
+    # Width of each column
+    columnWidths = []
+    for columnIndex in range(mostColumns):
+        widestRow = 0
+        for rowIndex in range(len(aList[columnIndex])):
+            rowWidth = len(str(aList[columnIndex][rowIndex]))
+            if rowWidth > widestRow:
+                widestRow = rowWidth
+        columnWidths.append(widestRow)
 
-    for i in range(listWidth):
+    # Print top line
+    for i in range(mostColumns):
         print(('—' * 11), end='')
-        if lengths[i] > 10:
-            print('—'*(lengths[i]-8), end='')
+        if columnWidths[i] > 10:
+            print('—' * (columnWidths[i] - 8), end='')
     print('—')
     item = 0
 
-    for i in range(listLength):
+    # Print the rest
+    for i in range(mostRows):
         if i == 0:
             print('|', end='')
         else:
             print('\n|', end='')
 
-        for j in range(listWidth):
-            if lengths[j] > 10:
-                print((' ' * (lengths[j]+2) + '|'), end='')
+        for j in range(mostColumns):
+            if columnWidths[j] > 10:
+                print((' ' * (columnWidths[j] + 2) + '|'), end='')
             else:
                 print((' ' * 10 + '|'), end='')
 
         print('\n|', end='')
 
-        for ii in range(listWidth):
+        for ii in range(mostColumns):
             try:
-                if lengths[ii] > 10:
-                    print(str(aList[ii][item]).center(lengths[ii]+2, ' ') + '|', end='')
+                if columnWidths[ii] > 10:
+                    print(str(aList[ii][item]).center(columnWidths[ii] + 2, ' ') + '|', end='')
                 else:
                     print(str(aList[ii][item]).center(10, ' ') + '|', end='')
 
             except IndexError:
-                if lengths[ii] > 10:
-                    print(' ' * (lengths[ii]+2) + '|', end='')
+                if columnWidths[ii] > 10:
+                    print(' ' * (columnWidths[ii] + 2) + '|', end='')
                 else:
                     print(' ' * 10 + '|', end='')
 
         print('\n|', end='')
 
-        for j in range(listWidth):
-            if lengths[j] > 10:
-                print((' ' * (lengths[j]+2) + '|'), end='')
+        for j in range(mostColumns):
+            if columnWidths[j] > 10:
+                print((' ' * (columnWidths[j] + 2) + '|'), end='')
             else:
                 print((' ' * 10 + '|'), end='')
 
         print('\n', end='')
 
-        for k in range(listWidth):
+        # Print bottom line
+        for k in range(mostColumns):
             print(('—' * 11), end='')
-            if lengths[k] > 10:
-                print('—'*(lengths[i]-8), end='')
+            if columnWidths[k] > 10:
+                print('—' * (columnWidths[k] - 8), end='')
         item += 1
         print('—', end='')
     print()
-

@@ -471,7 +471,7 @@ while True:
                 break
             continue
 
-        elif decision == 't':
+        elif decision == 'T':
             os.system('cls')
             table_it(scoresList)
             continue
