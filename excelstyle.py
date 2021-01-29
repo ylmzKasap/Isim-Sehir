@@ -12,6 +12,7 @@ orangeFill = PatternFill(fgColor='FCD5B4', fill_type='solid')
 oliveFill = PatternFill(fgColor='D8E4BC', fill_type='solid')
 lightGrayFill = PatternFill(fgColor='F2F2F2', fill_type='solid')
 darkGrayFill = PatternFill(fgColor='E2E2E2', fill_type='solid')
+purpleFill = PatternFill(fgColor='E4DFEC', fill_type='solid')
 
-centerIt = Alignment(horizontal='center', vertical='center')  # Center align preset
-boldFont = Font(bold=True)                                    # Bold preset
+centerIt = Alignment(horizontal='center', vertical='center')
+boldFont = Font(bold=True)

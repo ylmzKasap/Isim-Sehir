@@ -2,6 +2,7 @@ import os
 import random
 import time
 import datetime
+import copy
 
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -13,7 +14,7 @@ import excelstyle
 
 players = []
 gameCategories = []
-playerNumber, categoryNumber = 1, 1
+playerNumber = categoryNumber = 1
 letters = ['a', 'b', 'c', 'ç', 'd', 'e', 'f', 'g', 'ğ', 'h', 'ı', 'i',
            'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's', 'ş', 't',
            'u', 'ü', 'v', 'y', 'z']
@@ -79,9 +80,20 @@ def save_to_excel():
         sheet['A1'].fill = excelstyle.orangeFill
         sheet['A1'].border = excelstyle.thinBorder
 
+        # Style total score
+        sumCell = f'{get_column_letter(maxColumn)}{maxRow + 2}'
+        sheet[sumCell] = obj[gamePlayer].score
+        sheet[sumCell].border = excelstyle.thinBorder
+        sheet[sumCell].fill = excelstyle.purpleFill
+        sheet[sumCell].alignment = excelstyle.centerIt
+        sheet[sumCell].font = excelstyle.boldFont
+        sheet.row_dimensions[maxRow + 2].height = 30
+
         for i in range(1, maxColumn + 1):
-            sheet[f'{get_column_letter(i)}2'].fill = excelstyle.oliveFill  # Color categories
-            sheet.column_dimensions[get_column_letter(i)].width = 20  # Adjust column width
+            # Color categories
+            sheet[f'{get_column_letter(i)}2'].fill = excelstyle.oliveFill
+            # Adjust column width
+            sheet.column_dimensions[get_column_letter(i)].width = 20
 
         for i in range(1, 3):
             for j in range(1, maxColumn + 1):
@@ -91,9 +103,16 @@ def save_to_excel():
             # Adjust row height
             sheet.row_dimensions[i].height = 30
 
-            # Adjust borders
             for j in range(1, maxColumn + 1):
-                sheet[f'{get_column_letter(j)}{i}'].border = excelstyle.thinBorder
+                styleCell = f'{get_column_letter(j)}{i}'
+                # Adjust borders
+                sheet[styleCell].border = excelstyle.thinBorder
+                # Adjust alignment
+                sheet[styleCell].alignment = excelstyle.centerIt
+                # Wrap text
+                alignment = copy.copy(sheet[styleCell].alignment)
+                alignment.wrapText = True
+                sheet[styleCell].alignment = alignment
 
             # Adjust row colors
             if i > 2 and i % 2 != 0:
@@ -102,10 +121,6 @@ def save_to_excel():
             elif i > 2 and i % 2 == 0:
                 for j in range(1, maxColumn + 1):
                     sheet[f'{get_column_letter(j)}{i}'].fill = excelstyle.darkGrayFill
-
-            # Adjust alignment
-            for j in range(1, maxColumn + 1):
-                sheet[f'{get_column_letter(j)}{i}'].alignment = excelstyle.centerIt
 
         # Write answers
         for columnIndex, column in enumerate(obj[gamePlayer].table):
@@ -122,12 +137,17 @@ print('\nİsim şehir oyununa hoş geldiniz.\n', end=' ')
 
 while True:
     print(f"\n{playerNumber}. oyuncunun ismini yazın."
-          + " | '-' son kişiyi siler. 'q' isim sorgusunu bitirir.")
+          + " | '-' son kişiyi sil | 'q' isim sorgusunu bitir")
     name = input().title()
 
     if name in players:
         os.system('cls')
         print('\nBu isimde bir oyuncu zaten var. Başka bir isim girin.')
+        continue
+
+    if name == '':
+        os.system('cls')
+        print('\nBir isim girin.')
         continue
 
     if name == 'Q':
@@ -159,12 +179,17 @@ os.system('cls')
 
 while True:
     print(f"\n{categoryNumber}. kategorinin ismini yazın."
-          + " | '-' son kategoriyi siler. 'q' kategori sorgusunu bitirir.")
+          + " | '-' son kategoriyi sil | 'q' kategori sorgusunu bitir")
     category = input().title()
 
     if category in gameCategories:
         os.system('cls')
         print('\nBu isimde bir kategori zaten var. Başka bir kategori girin.')
+        continue
+
+    if category == '':
+        os.system('cls')
+        print('\nBir kategori girin.')
         continue
 
     if category == 'Q':
